@@ -1,247 +1,47 @@
 import { Request, Response } from "express";
-import prisma from "../utils/database";
-import { ApiResponse, PaginationParams } from "../types";
+import { PrismaClient } from "@prisma/client";
 
-export const getProducts = async (req: Request, res: Response) => {
+const prisma = new PrismaClient();
+
+export const getProducts = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      sortBy = "name",
-      sortOrder = "asc",
-    } = req.query;
-
-    const pagination: PaginationParams = {
-      page: parseInt(page as string),
-      limit: parseInt(limit as string),
-      search: search as string,
-      sortBy: sortBy as string,
-      sortOrder: sortOrder as "asc" | "desc",
-    };
-
-    const skip = (pagination.page - 1) * pagination.limit;
-
-    const where:any = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { description: { contains: search, mode: "insensitive" } },
-            { sku: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : {};
-    
-      const orderBy = {
-        [pagination.sortBy as keyof typeof prisma.product]: pagination.sortOrder
-    };
-
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: {
-            select: { name: true },
-          },
-        },
-        // { [pagination.sortBy]: pagination.sortOrder }
-        orderBy,
-        skip,
-        take: pagination.limit,
-      }),
-      prisma.product.count({ where }),
-    ]);
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        products,
-        pagination: {
-          page: pagination.page,
-          limit: pagination.limit,
-          total,
-          totalPages: Math.ceil(total / pagination.limit),
+    const search = req.query.search?.toString();
+    const products = await prisma.products.findMany({
+      where: {
+        name: {
+          contains: search,
         },
       },
-    };
-    res.json(response);
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch products",
-    });
-  }
-};
-export const getProductById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        inventoryLogs: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        },
+      orderBy: {
+        createdAt: "desc",
       },
     });
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        error: "Product not found",
-      });
-    }
-    res.json({
-      success: true,
-      data: product,
-    });
+    res.json(products);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch product",
-    });
+    res.status(500).json({ message: "Error retrieving products" });
   }
 };
-export const createProduct = async (req: Request, res: Response) => {
+
+export const createProduct = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const product = await prisma.product.create({ data: req.body });
-    await prisma.inventoryLog.create({
+    const { productId, name, price, rating, stockQuantity } = req.body;
+    const product = await prisma.products.create({
       data: {
-        productId: product.id,
-        type: "ADJUSTMENT",
-        quantity: product.quantity,
-        previousQty: 0,
-        newQty: product.quantity,
-        reason: "Product creation",
+        productId,
+        name,
+        price,
+        rating,
+        stockQuantity,
       },
     });
-    res.status(201).json({
-      success: true,
-      data: product,
-    });
+    res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Failed to create product",
-    });
+    res.status(500).json({ message: "Error creating product" });
   }
 };
-export const updateProduct = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { quantity, ...updateData } = req.body;
-
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
-    });
-
-    if (!existingProduct) {
-      return res.status(404).json({
-        success: false,
-        error: "Product not found",
-      });
-    }
-    // If quantity is being updated, log the change
-    if (quantity !== undefined && quantity !== existingProduct.quantity) {
-      await prisma.inventoryLog.create({
-        data: {
-          productId: id,
-          type: "ADJUSTMENT",
-          quantity: quantity - existingProduct.quantity,
-          previousQty: existingProduct.quantity,
-          newQty: quantity,
-          reason: "Manual quantity adjustment",
-        },
-      });
-    }
-
-    const product = await prisma.product.update({
-      where: { id },
-      data: { ...updateData, quantity },
-    });
-
-    res.json({
-      success: true,
-      data: product,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Failed to update product",
-    });
-  }
-};
-export const deleteProduct = async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-  
-      await prisma.product.delete({
-        where: { id }
-      });
-  
-      res.json({
-        success: true,
-        message: 'Product deleted successfully'
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete product'
-      });
-    }
-  };
-  export const updateInventory = async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { type, quantity, reason } = req.body;
-  
-      const product = await prisma.product.findUnique({
-        where: { id }
-      });
-  
-      if (!product) {
-        return res.status(404).json({
-          success: false,
-          error: 'Product not found'
-        });
-      }
-  
-      let newQuantity = product.quantity;
-      
-      if (type === 'IN') {
-        newQuantity += quantity;
-      } else if (type === 'OUT') {if (product.quantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          error: 'Insufficient stock'
-        });
-      }
-      newQuantity -= quantity;
-    }
-
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: { quantity: newQuantity }
-    });
-
-    await prisma.inventoryLog.create({
-      data: {
-        productId: id,
-        type,
-        quantity,
-        previousQty: product.quantity,
-        newQty: newQuantity,
-        reason
-      }});
-      res.json({
-        success: true,
-        data: updatedProduct
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update inventory'
-      });
-    }
-  };  

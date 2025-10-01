@@ -1,21 +1,18 @@
-import { Router } from 'express';
-import {
-  getProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  updateInventory
-} from '../controllers/productController';
-import { authenticate } from '../middleware/auth';
+import { Router } from "express";
+import { createProduct, getProducts } from "../controllers/productController";
+import { createPurchase, getPurchases } from "../controllers/purchasesController";
+import { createSale, getSales } from "../controllers/salesController";
 
 const router = Router();
 
-router.get('/', getProducts);
-router.get('/:id', getProductById);
-router.post('/', authenticate, createProduct);
-router.put('/:id', authenticate, updateProduct);
-router.delete('/:id', authenticate, deleteProduct);
-router.post('/:id/inventory', authenticate, updateInventory);
+router.get("/", getProducts);
+router.post("/", createProduct);
+// Purchases
+router.get("/purchases", getPurchases);
+router.post("/purchases", createPurchase);
+
+// Sales
+router.get("/sales", getSales);
+router.post("/sales", createSale);
 
 export default router;

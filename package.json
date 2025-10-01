@@ -13,7 +13,9 @@
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:migrate": "prisma migrate dev --name init"
+    "db:migrate": "prisma migrate dev --name init",
+    "migrate:dev": "cross-env DATABASE_URL=$DATABASE_URL_LOCAL npx prisma migrate dev --name init",
+    "migrate:prod": "cross-env DATABASE_URL=$DATABASE_URL_PROD npx prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +38,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.5.2",
     "@vercel/node": "^5.3.24",
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"

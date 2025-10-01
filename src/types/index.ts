@@ -26,14 +26,11 @@ export interface ApiResponse<T = any> {
   // Product-specific types
   export interface CreateProductRequest {
     name: string;
-    description?: string;
-    sku: string;
     price: number;
-    quantity?: number;
-    minStock?: number;
-    maxStock?: number;
-    categoryId: string;
+    stockQuantity?: number;
+    rating?: number;
   }
+  
   
   export interface UpdateInventoryRequest {
     type: 'IN' | 'OUT' | 'ADJUSTMENT' | 'RETURN' | 'DAMAGED';

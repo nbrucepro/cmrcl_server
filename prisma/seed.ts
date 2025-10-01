@@ -1,80 +1,68 @@
-import { PrismaClient } from '@prisma/client';
-
+import { PrismaClient } from "@prisma/client";
+import fs from "fs";
+import path from "path";
 const prisma = new PrismaClient();
 
+async function deleteAllData(orderedFileNames: string[]) {
+  const modelNames = orderedFileNames.map((fileName) => {
+    const modelName = path.basename(fileName, path.extname(fileName));
+    return modelName.charAt(0).toUpperCase() + modelName.slice(1);
+  });
+
+  for (const modelName of modelNames) {
+    const model: any = prisma[modelName as keyof typeof prisma];
+    if (model) {
+      await model.deleteMany({});
+      console.log(`Cleared data from ${modelName}`);
+    } else {
+      console.error(
+        `Model ${modelName} not found. Please ensure the model name is correctly specified.`
+      );
+    }
+  }
+}
+
 async function main() {
-  console.log('🌱 Starting database seed...');
+  const dataDirectory = path.join(__dirname, "seedData");
 
-  // Create categories
-  const categories = await Promise.all([
-    prisma.category.upsert({
-      where: { name: 'Electronics' },
-      update: {},
-      create: {
-        name: 'Electronics',
-        description: 'Electronic devices and components'
-      }
-    }),
-    prisma.category.upsert({
-      where: { name: 'Clothing' },
-      update: {},
-      create: {
-        name: 'Clothing',
-        description: 'Apparel and accessories'
-      }
-    }),
-    prisma.category.upsert({
-      where: { name: 'Books' },
-      update: {},
-      create: {
-        name: 'Books',
-        description: 'Books and publications'
-      }
-    })
-  ]);
+  const orderedFileNames = [
+    "products.json",
+    "expenseSummary.json",
+    "sales.json",
+    "salesSummary.json",
+    "purchases.json",
+    "purchaseSummary.json",
+    "users.json",
+    "expenses.json",
+    "expenseByCategory.json",
+  ];
 
-  console.log('✅ Categories created');
+  await deleteAllData(orderedFileNames);
 
-  // Create sample products
-  const products = await Promise.all([
-    prisma.product.upsert({
-      where: { sku: 'LAP-001' },
-      update: {},
-      create: {
-        name: 'Laptop',
-        description: 'High-performance laptop',
-        sku: 'LAP-001',
-        price: 999.99,
-        quantity: 25,
-        minStock: 5,
-        maxStock: 50,
-        categoryId: categories[0].id
-      }
-    }),
-    prisma.product.upsert({
-      where: { sku: 'TSH-001' },
-      update: {},
-      create: {
-        name: 'T-Shirt',
-        description: 'Cotton t-shirt',
-        sku: 'TSH-001',
-        price: 19.99,
-        quantity: 100,
-        minStock: 20,
-        maxStock: 200,
-        categoryId: categories[1].id
-      }
-    })
-  ]);
+  for (const fileName of orderedFileNames) {
+    const filePath = path.join(dataDirectory, fileName);
+    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const modelName = path.basename(fileName, path.extname(fileName));
+    const model: any = prisma[modelName as keyof typeof prisma];
 
-  console.log('✅ Products created');
-  console.log('🎉 Database seed completed!');
+    if (!model) {
+      console.error(`No Prisma model matches the file name: ${fileName}`);
+      continue;
+    }
+
+    for (const data of jsonData) {
+      await model.create({
+        data,
+      });
+    }
+
+    console.log(`Seeded ${modelName} with data from ${fileName}`);
+  }
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
-    process.exit(1);
+    console.error(e);
   })
   .finally(async () => {
     await prisma.$disconnect();
