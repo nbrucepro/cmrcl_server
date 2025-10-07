@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { createProduct, getProducts } from "../controllers/productController";
-import { createPurchase, getPurchases } from "../controllers/purchasesController";
-import { createSale, getSales } from "../controllers/salesController";
+import { createProduct, getProducts } from "../controllers/productController.js";
+import { createPurchase, getPurchases } from "../controllers/purchasesController.js";
+import { createSale, getSales } from "../controllers/salesController.js";
 
 const router = Router();
 

@@ -4,11 +4,11 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import routes from "./routes";
-import dashboardRoutes from "./routes/dashboardRoutes";
-import productRoutes from "./routes/productRoutes";
-import userRoutes from "./routes/userRoutes";
-import expenseRoutes from "./routes/expenseRoutes";
+import routes from "./routes/index.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
 
 dotenv.config();
 
@@ -53,7 +53,7 @@ app.use("/expenses", expenseRoutes); // http://localhost:8000/expenses
 
 
 // Error handler
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((error, req, res, next) => {
   console.error("Error:", error);
   res.status(error.status || 500).json({
     success: false,
