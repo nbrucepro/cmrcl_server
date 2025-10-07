@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // CREATE Purchase (already good)
-export const createPurchase = async (req: Request, res: Response) => {
+export const createPurchase = async (req, res) => {
   try {
     const { productId, quantity, unitCost } = req.body;
 
@@ -38,7 +38,7 @@ export const createPurchase = async (req: Request, res: Response) => {
 };
 
 // GET All Purchases
-export const getPurchases = async (req: Request, res: Response) => {
+export const getPurchases = async (req, res) => {
   try {
     const purchases = await prisma.purchases.findMany({
       include: { product: true },

@@ -4,9 +4,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getDashboardMetrics = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+  req,
+  res
+) => {
   try {
     console.log("Hello")
     const popularProducts = await prisma.products.findMany({

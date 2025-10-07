@@ -4,9 +4,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getProducts = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+  req,
+  res
+) => {
   try {
     const search = req.query.search?.toString();
     const products = await prisma.products.findMany({
@@ -26,9 +26,9 @@ export const getProducts = async (
 };
 
 export const createProduct = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+  req,
+  res
+) => {
   try {
     const { productId, name, price, rating, stockQuantity } = req.body;
     const product = await prisma.products.create({
