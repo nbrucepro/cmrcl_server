@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config();
 
@@ -24,8 +25,9 @@ app.get("/", (req, res) => {
 
 app.use(
   cors({
-    origin: "https://cmrcl-client.onrender.com",
-    // credentials: true,
+    origin: "http://localhost:3000",
+    // origin: "https://cmrcl-client.onrender.com",
+    credentials: true,
   })
 );
 
@@ -50,6 +52,7 @@ app.use("/dashboard", dashboardRoutes); // http://localhost:8000/dashboard
 app.use("/products", productRoutes); // http://localhost:8000/products
 app.use("/users", userRoutes); // http://localhost:8000/users
 app.use("/expenses", expenseRoutes); // http://localhost:8000/expenses
+app.use("/api/admin", adminRoutes);
 
 
 // Error handler
