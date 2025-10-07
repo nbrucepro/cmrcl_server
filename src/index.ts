@@ -18,6 +18,10 @@ const app = express();
 app.use(helmet());
 
 // CORS
+app.get("/", (req, res) => {
+  res.send("Server is live 🚀");
+});
+
 app.use(
   cors({
     origin: "https://cmrcl-client.onrender.com",
