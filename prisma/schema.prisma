@@ -8,44 +8,54 @@ datasource db {
 }
 
 model Admin {
-  adminId   String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  adminId      String     @id @default(uuid())
+  email        String     @unique
+  password     String
+  name         String?
+  isSuperAdmin Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
+  // Relations
+  categories   Category[]
+  products     Products[]
+  sales        Sales[]
+  purchases    Purchases[]
+  expenses     Expenses[]
+  salesSummary SalesSummary[]
+  purchaseSummary PurchaseSummary[]
+  expenseSummary  ExpenseSummary[]
+}
 
 model Category {
   categoryId String    @id @default(uuid())
-  name       String    @unique
+  name       String
+  adminId    String
+  admin      Admin      @relation(fields: [adminId], references: [adminId])
   products   Products[]
 }
 
-model Users {
-  userId String @id
-  name   String
-  email  String
-}
-
 model Products {
-  productId     String      @id
+  productId     String      @id @default(uuid())
   name          String
   price         Float
   rating        Float?
   stockQuantity Int
+  categoryId    String?
+  adminId       String
+  admin         Admin       @relation(fields: [adminId], references: [adminId])
+  category      Category?    @relation(fields: [categoryId], references: [categoryId])
   Sales         Sales[]
   Purchases     Purchases[]
-  categoryId    String?
-  category      Category?  @relation(fields: [categoryId], references: [categoryId])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model Sales {
   saleId      String   @id @default(uuid())
   productId   String
+  adminId     String
+  admin       Admin    @relation(fields: [adminId], references: [adminId])
   timestamp   DateTime
   quantity    Int
   unitPrice   Float
@@ -56,6 +66,8 @@ model Sales {
 model Purchases {
   purchaseId String   @id @default(uuid())
   productId  String
+  adminId    String
+  admin      Admin    @relation(fields: [adminId], references: [adminId])
   timestamp  DateTime
   quantity   Int
   unitCost   Float
@@ -64,35 +76,43 @@ model Purchases {
 }
 
 model Expenses {
-  expenseId String   @id
+  expenseId String   @id @default(uuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [adminId])
   category  String
   amount    Float
   timestamp DateTime
 }
 
 model SalesSummary {
-  salesSummaryId   String   @id
+  salesSummaryId   String   @id @default(uuid())
+  adminId          String
+  admin            Admin    @relation(fields: [adminId], references: [adminId])
   totalValue       Float
   changePercentage Float?
   date             DateTime
 }
 
 model PurchaseSummary {
-  purchaseSummaryId String   @id
+  purchaseSummaryId String   @id @default(uuid())
+  adminId           String
+  admin             Admin    @relation(fields: [adminId], references: [adminId])
   totalPurchased    Float
   changePercentage  Float?
   date              DateTime
 }
 
 model ExpenseSummary {
-  expenseSummaryId  String              @id
+  expenseSummaryId  String              @id @default(uuid())
+  adminId           String
+  admin             Admin               @relation(fields: [adminId], references: [adminId])
   totalExpenses     Float
   date              DateTime
   ExpenseByCategory ExpenseByCategory[]
 }
 
 model ExpenseByCategory {
-  expenseByCategoryId String         @id
+  expenseByCategoryId String         @id @default(uuid())
   expenseSummaryId    String
   category            String
   amount              BigInt

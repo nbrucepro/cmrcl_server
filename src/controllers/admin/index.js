@@ -33,11 +33,12 @@ export const loginAdmin = async (req, res) => {
 
     const token = jwt.sign(
       { adminId: admin.adminId, email: admin.email },
-      JWT_SECRET,
-      { expiresIn: "1h" }
+      JWT_SECRET
+      // ,{ expiresIn: "1h" }
     );
 
-    res.json({ token });
+    res.json({ token,      admin: { adminId: admin.adminId, name: admin.name, email: admin.email,
+    }, });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

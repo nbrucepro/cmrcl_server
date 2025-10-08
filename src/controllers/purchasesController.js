@@ -2,10 +2,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// CREATE Purchase (already good)
+// CREATE PURCHASE
 export const createPurchase = async (req, res) => {
   try {
+    const adminId = req.admin?.adminId; // ✅ get from middleware/cookie
     const { productId, quantity, unitCost } = req.body;
+
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     const product = await prisma.products.findUnique({ where: { productId } });
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -14,6 +17,7 @@ export const createPurchase = async (req, res) => {
       const newPurchase = await tx.purchases.create({
         data: {
           productId,
+          adminId, // ✅ include adminId
           quantity,
           unitCost,
           totalCost: quantity * unitCost,
@@ -36,15 +40,18 @@ export const createPurchase = async (req, res) => {
   }
 };
 
-// GET All Purchases
+// GET ALL PURCHASES (filtered by admin)
 export const getPurchases = async (req, res) => {
   try {
+    const adminId = req.admin?.adminId;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+
     const purchases = await prisma.purchases.findMany({
+      where: { adminId }, // ✅ filter by admin
       include: { product: true },
       orderBy: { timestamp: "desc" },
     });
 
-    // map for frontend-friendly rows
     const formatted = purchases.map((p) => ({
       id: p.purchaseId,
       productId: p.productId,

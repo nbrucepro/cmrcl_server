@@ -25,8 +25,8 @@ app.get("/", (req, res) => {
 
 app.use(
   cors({
-    // origin: "http://localhost:3000",
-    origin: "https://cmrcl.vercel.app",
+    origin: "http://localhost:3000",
+    // origin: "https://cmrcl.vercel.app",
     credentials: true,
   })
 );
