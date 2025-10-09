@@ -21,17 +21,40 @@ export const getDashboardMetrics = async (req, res) => {
         category: true,
       },
     });
-
-    const popularProducts = products
-      .map((p) => ({
-        ...p,
-        totalStock: p.variants.reduce(
-          (sum, variant) => sum + (variant.stockQuantity || 0),
-          0
-        ),
-      }))
-      .sort((a, b) => b.totalStock - a.totalStock)
-      .slice(0, 15);
+    // const popularProducts = products
+    //   .map((p) => ({
+    //     ...p,
+    //     totalStock: p.variants.reduce(
+    //       (sum, variant) => sum + (variant.stockQuantity || 0),
+    //       0
+    //     ),
+    //   }))
+    //   .sort((a, b) => b.totalStock - a.totalStock)
+    //   .slice(0, 15);
+   const popularProductsWithSoldCount = await Promise.all(
+       products.map(async (p) => {
+         // total stock from variants
+         const totalStock = p.variants.reduce(
+           (sum, variant) => sum + (variant.stockQuantity || 0),
+           0
+         );
+    
+         // sold count from Sales table
+         const soldCountData = await prisma.sales.aggregate({
+           where: { productId: p.productId, adminId },
+           _sum: { quantity: true },
+         });
+    
+         const soldCount = soldCountData._sum.quantity || 0;
+    
+         return { ...p, totalStock, soldCount };
+       })
+      );
+    
+      // Sort by sold count (most popular first)
+     const popularProducts = popularProductsWithSoldCount
+        .sort((a, b) => b.soldCount - a.soldCount)
+        .slice(0, 15);
 
     const salesSummary = await prisma.salesSummary.findMany({
       where: { adminId },
