@@ -14,6 +14,13 @@ export const getProducts = async (req, res) => {
           name: { contains: search, mode: "insensitive" },
         }),
       },
+      include: {
+        variants: {
+          include: {
+            attributes: true, // ✅ include attributes for each variant
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -28,41 +35,61 @@ export const getProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const adminId = req.admin.adminId;
-    const { name, price, rating, stockQuantity } = req.body;
+    const { name,categoryId, rating,description, variants } = req.body;
 
     const product = await prisma.products.create({
       data: {
         name,
-        price,
         rating,
-        stockQuantity,
+        description: description || null,
+        categoryId, 
         adminId,
+        variants: {
+          create: variants.map((v) => ({
+            sku: v.sku,
+            purchasePrice: v.purchasePrice,
+            sellingPrice: v.sellingPrice,
+            stockQuantity: v.stockQuantity || 0,
+            attributes: {
+              create: v.attributes.map((attr) => ({
+                name: attr.name,
+                value: attr.value,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        variants: { include: { attributes: true } },
       },
     });
 
     res.status(201).json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error creating product" });
+    res.status(500).json({ message: "Error creating product with variants" });
   }
 };
+
+
 
 // 🟡 Update product (only if it belongs to this admin)
 export const updateProduct = async (req, res) => {
   try {
     const adminId = req.admin.adminId;
     const { id } = req.params;
-    const { name, price, rating, stockQuantity } = req.body;
 
-    const product = await prisma.products.findUnique({ where: { id } });
+    const { name, description, rating } = req.body;
+    const product = await prisma.products.findUnique({ where: { productId: id } });
 
     if (!product || product.adminId !== adminId) {
       return res.status(404).json({ message: "Product not found or unauthorized" });
     }
 
+
     const updated = await prisma.products.update({
-      where: { id },
-      data: { name, price, rating, stockQuantity },
+        where: { productId: id },
+        data: { name, description, rating },
     });
 
     res.json(updated);
@@ -78,13 +105,13 @@ export const deleteProduct = async (req, res) => {
     const adminId = req.admin.adminId;
     const { id } = req.params;
 
-    const product = await prisma.products.findUnique({ where: { id } });
+    const product = await prisma.products.findUnique({ where: {productId:id } });
 
     if (!product || product.adminId !== adminId) {
       return res.status(404).json({ message: "Product not found or unauthorized" });
     }
 
-    await prisma.products.delete({ where: { id } });
+    await prisma.products.delete({ where: { productId:id } });
 
     res.json({ message: "Product deleted successfully" });
   } catch (error) {

@@ -11,6 +11,11 @@ import userRoutes from "./routes/userRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://cmrcl.vercel.app",
+];
+
 dotenv.config();
 
 const app = express();
@@ -26,7 +31,14 @@ app.get("/", (req, res) => {
 app.use(
   cors({
     // origin: "http://localhost:3000",
-    origin: "https://cmrcl.vercel.app",
+    origin: function(origin, callback){
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );

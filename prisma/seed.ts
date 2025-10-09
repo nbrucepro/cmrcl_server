@@ -1,68 +1,37 @@
 import { PrismaClient } from "@prisma/client";
-import fs from "fs";
-import path from "path";
+
 const prisma = new PrismaClient();
 
-async function deleteAllData(orderedFileNames: string[]) {
-  const modelNames = orderedFileNames.map((fileName) => {
-    const modelName = path.basename(fileName, path.extname(fileName));
-    return modelName.charAt(0).toUpperCase() + modelName.slice(1);
-  });
-
-  for (const modelName of modelNames) {
-    const model: any = prisma[modelName as keyof typeof prisma];
-    if (model) {
-      await model.deleteMany({});
-      console.log(`Cleared data from ${modelName}`);
-    } else {
-      console.error(
-        `Model ${modelName} not found. Please ensure the model name is correctly specified.`
-      );
-    }
-  }
-}
-
 async function main() {
-  const dataDirectory = path.join(__dirname, "seedData");
+  // Replace this with the adminId you want to associate the categories with
+  const adminId = "8859d616-3dae-49ab-892e-cd8e6ea0a084";
 
-  const orderedFileNames = [
-    "products.json",
-    "expenseSummary.json",
-    "sales.json",
-    "salesSummary.json",
-    "purchases.json",
-    "purchaseSummary.json",
-    "users.json",
-    "expenses.json",
-    "expenseByCategory.json",
-  ];
+  const categories = ["door", "lock"];
 
-  await deleteAllData(orderedFileNames);
+  for (const name of categories) {
+    // Check if category already exists to avoid duplicates
+    const existing = await prisma.category.findFirst({
+      where: { name, adminId },
+    });
 
-  for (const fileName of orderedFileNames) {
-    const filePath = path.join(dataDirectory, fileName);
-    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const modelName = path.basename(fileName, path.extname(fileName));
-    const model: any = prisma[modelName as keyof typeof prisma];
-
-    if (!model) {
-      console.error(`No Prisma model matches the file name: ${fileName}`);
-      continue;
-    }
-
-    for (const data of jsonData) {
-      await model.create({
-        data,
+    if (!existing) {
+      await prisma.category.create({
+        data: {
+          name,
+          adminId,
+        },
       });
+      console.log(`Category "${name}" created.`);
+    } else {
+      console.log(`Category "${name}" already exists.`);
     }
-
-    console.log(`Seeded ${modelName} with data from ${fileName}`);
   }
 }
 
 main()
   .catch((e) => {
     console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();

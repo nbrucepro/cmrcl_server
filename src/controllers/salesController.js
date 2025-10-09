@@ -10,11 +10,15 @@ export const createSale = async (req, res) => {
 
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
-    const product = await prisma.products.findUnique({ where: { productId } });
+    const product = await prisma.products.findUnique({
+        where: { productId },
+        include: { variants: true },
+    });
+      
     if (!product) return res.status(404).json({ message: "Product not found" });
-
-    if (product.stockQuantity < quantity)
+     if (product.variants[0].stockQuantity < quantity)
       return res.status(400).json({ message: "Not enough stock available" });
+
 
     const sale = await prisma.$transaction(async (tx) => {
       const newSale = await tx.sales.create({
@@ -28,9 +32,9 @@ export const createSale = async (req, res) => {
         },
       });
 
-      await tx.products.update({
-        where: { productId },
-        data: { stockQuantity: { decrement: quantity } },
+      await tx.productVariant.update({
+          where: { variantId: product.variants[0].variantId },
+          data: { stockQuantity: { decrement: quantity } },
       });
 
       return newSale;
@@ -50,24 +54,35 @@ export const getSales = async (req, res) => {
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     const sales = await prisma.sales.findMany({
-      where: { adminId }, // ✅ filter by admin
-      include: { product: true },
+      where: { adminId },
+      include: {
+        product: {
+          include: {
+            variants: true,
+          },
+        },
+      },
       orderBy: { timestamp: "desc" },
     });
 
-    const formatted = sales.map((s) => ({
-      id: s.saleId,
-      productId: s.productId,
-      productName: s.product?.name,
-      quantity: s.quantity,
-      price: s.unitPrice,
-      totalAmount: s.totalAmount,
-      date: s.timestamp,
-    }));
+    const formatted = sales.map((s) => {
+      const variant = s.product?.variants?.[0];
+      return {
+        saleId: s.saleId,
+        productId: s.productId,
+        productName: s.product?.name || "—",
+        sellingPrice: variant?.sellingPrice || s.unitPrice,
+        quantity: s.quantity,
+        totalAmount: s.totalAmount,
+        stockAfterSale: variant?.stockQuantity || 0,
+        date: s.timestamp,
+      };
+    });
 
-    res.json(formatted);
+    res.status(200).json(formatted);
   } catch (error) {
-    console.error(error);
+    console.error("Error retrieving sales:", error);
     res.status(500).json({ message: "Error retrieving sales" });
   }
 };
+

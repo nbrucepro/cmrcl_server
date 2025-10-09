@@ -10,12 +10,28 @@ export const getDashboardMetrics = async (req, res) => {
     if (!adminId) {
       return res.status(400).json({ message: "Admin ID is required" });
     }
-
-    const popularProducts = await prisma.products.findMany({
+    const products = await prisma.products.findMany({
       where: { adminId },
-      take: 15,
-      orderBy: { stockQuantity: "desc" },
+      include: {
+        variants: {
+          include: {
+            attributes: true,
+          },
+        },
+        category: true,
+      },
     });
+
+    const popularProducts = products
+      .map((p) => ({
+        ...p,
+        totalStock: p.variants.reduce(
+          (sum, variant) => sum + (variant.stockQuantity || 0),
+          0
+        ),
+      }))
+      .sort((a, b) => b.totalStock - a.totalStock)
+      .slice(0, 15);
 
     const salesSummary = await prisma.salesSummary.findMany({
       where: { adminId },
