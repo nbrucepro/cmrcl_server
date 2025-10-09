@@ -3,6 +3,7 @@ import { createProduct, deleteProduct, getProducts, updateProduct } from "../con
 import { createPurchase, getPurchases } from "../controllers/purchasesController.js";
 import { createSale, getSales } from "../controllers/salesController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { getProfitsLosses } from "../controllers/profit-loss.js";
 
 const router = Router();
 
@@ -18,4 +19,7 @@ router.post("/purchases",authMiddleware, createPurchase);
 router.get("/sales",authMiddleware, getSales);
 router.post("/sales",authMiddleware, createSale);
 
+
+// Profit & Loss
+router.get("/profits-losses", authMiddleware, getProfitsLosses);
 export default router;

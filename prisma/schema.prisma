@@ -25,6 +25,7 @@ model Admin {
   salesSummary    SalesSummary[]
   purchaseSummary PurchaseSummary[]
   expenseSummary  ExpenseSummary[]
+  profitLossSummary ProfitLossSummary[]
 }
 
 model Category {
@@ -140,3 +141,18 @@ model ExpenseByCategory {
   date                DateTime
   expenseSummary      ExpenseSummary @relation(fields: [expenseSummaryId], references: [expenseSummaryId])
 }
+
+model ProfitLossSummary {
+  id              String   @id @default(uuid())
+  adminId         String
+  admin           Admin    @relation(fields: [adminId], references: [adminId])
+  totalSales      Float    @default(0)
+  totalPurchases  Float    @default(0)
+  totalExpenses   Float    @default(0)
+  netProfit       Float    @default(0)
+  changePercentage Float?
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime @default(now())
+}
+
