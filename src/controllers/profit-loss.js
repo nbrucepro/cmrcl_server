@@ -6,7 +6,7 @@ import { startOfMonth, endOfMonth } from "date-fns";
 export const getProfitsLosses = async (req, res) => {
   try {
     const { startDate, endDate, month, year } = req.query;
-    const adminId = req?.admin?.adminId; // ✅ from middleware
+    const adminId = req?.admin?.adminId; // ✅ from 
     console.log(req)
 
     if (!adminId) {
