@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { updateSummary } from "../utils/updateSummary.js";
 
 const prisma = new PrismaClient();
 
@@ -40,7 +41,10 @@ export const createPurchase = async (req, res) => {
 
       return newPurchase;
     });
-
+    
+    // 🧾 Update daily purchase summary
+    // await updateSummary("purchase", adminId, purchase.totalCost);
+    await updateSummary("purchase", "create", adminId, purchase.totalCost, purchase.timestamp);
     res.status(201).json(purchase);
   } catch (error) {
     console.error(error);
@@ -86,3 +90,98 @@ export const getPurchases = async (req, res) => {
     res.status(500).json({ message: "Error retrieving purchases" });
   }
 };
+
+export const updatePurchase = async (req, res) => {
+  try {
+    const { purchaseId } = req.params;
+    const { quantity, unitCost } = req.body;
+    const adminId = req.admin?.adminId;
+
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+
+    // 🧾 Fetch existing purchase first
+    const existingPurchase = await prisma.purchases.findUnique({
+      where: { purchaseId },
+      include: { product: { include: { variants: true } } },
+    });
+
+    if (!existingPurchase) {
+      return res.status(404).json({ message: "Purchase not found" });
+    }
+
+    const variant = existingPurchase.product.variants[0];
+    const oldQuantity = existingPurchase.quantity;
+    const oldTotal = existingPurchase.totalCost;
+
+    const newTotal = quantity * unitCost;
+    const amountDiff = newTotal - oldTotal;
+
+    // ⚙️ Update purchase & adjust stock accordingly
+    const updatedPurchase = await prisma.$transaction(async (tx) => {
+      const updated = await tx.purchases.update({
+        where: { purchaseId },
+        data: {
+          quantity,
+          unitCost,
+          totalCost: newTotal,
+        },
+      });
+
+      // Adjust stock difference
+      const stockDiff = quantity - oldQuantity;
+      await tx.productVariant.update({
+        where: { variantId: variant.variantId },
+        data: { stockQuantity: { increment: stockDiff } },
+      });
+
+      return updated;
+    });
+
+    // 🧾 Update purchase summary difference
+    await updateSummary("purchase", "update", adminId, amountDiff, existingPurchase.timestamp);
+
+    res.status(200).json(updatedPurchase);
+  } catch (err) {
+    console.error("Error updating purchase:", err);
+    res.status(500).json({ message: "Error updating purchase" });
+  }
+};
+
+export const deletePurchase = async (req, res) => {
+  try {
+    const { purchaseId } = req.params;
+    const adminId = req.admin?.adminId;
+
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+
+    // 🧾 Find existing purchase
+    const purchase = await prisma.purchases.findUnique({
+      where: { purchaseId },
+      include: { product: { include: { variants: true } } },
+    });
+
+    if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+
+    const variant = purchase.product.variants[0];
+
+    await prisma.$transaction(async (tx) => {
+      // Restore stock
+      await tx.productVariant.update({
+        where: { variantId: variant.variantId },
+        data: { stockQuantity: { decrement: purchase.quantity } },
+      });
+
+      // Delete purchase record
+      await tx.purchases.delete({ where: { purchaseId } });
+    });
+
+    // 🧾 Subtract from daily purchase summary
+    await updateSummary("purchase", "delete", adminId, purchase.totalCost, purchase.timestamp);
+
+    res.status(200).json({ message: "Purchase deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting purchase:", err);
+    res.status(500).json({ message: "Error deleting purchase" });
+  }
+};
+

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { updateSummary } from "../utils/updateSummary.js";
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,10 @@ export const createSale = async (req, res) => {
 
       return newSale;
     });
+    
+// 🧾 Update daily sales summary
+    // await updateSummary("sale", adminId, sale.totalAmount);
+    await updateSummary("sale", "create", adminId, sale.totalAmount, sale.timestamp);
 
     res.status(201).json(sale);
   } catch (error) {
@@ -85,4 +90,49 @@ export const getSales = async (req, res) => {
     res.status(500).json({ message: "Error retrieving sales" });
   }
 };
+export const updateSale = async (req, res) => {
+  try {
+    const { saleId } = req.params;
+    const { quantity, unitPrice } = req.body;
+    const adminId = req.admin?.adminId;
 
+    const existingSale = await prisma.sales.findUnique({ where: { saleId } });
+    if (!existingSale) return res.status(404).json({ message: "Sale not found" });
+
+    const newTotal = quantity * unitPrice;
+    const amountDiff = newTotal - existingSale.totalAmount;
+
+    const updatedSale = await prisma.sales.update({
+      where: { saleId },
+      data: { quantity, unitPrice, totalAmount: newTotal },
+    });
+
+    // Adjust summary difference
+    await updateSummary("sale", "update", adminId, amountDiff, existingSale.timestamp);
+
+    res.status(200).json(updatedSale);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating sale" });
+  }
+};
+
+export const deleteSale = async (req, res) => {
+  try {
+    const { saleId } = req.params;
+    const adminId = req.admin?.adminId;
+
+    const sale = await prisma.sales.findUnique({ where: { saleId } });
+    if (!sale) return res.status(404).json({ message: "Sale not found" });
+
+    await prisma.sales.delete({ where: { saleId } });
+
+    // Subtract from summary
+    await updateSummary("sale", "delete", adminId, sale.totalAmount, sale.timestamp);
+
+    res.status(200).json({ message: "Sale deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting sale" });
+  }
+};
