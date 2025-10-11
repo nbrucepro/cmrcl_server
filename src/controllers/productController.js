@@ -11,7 +11,11 @@ export const getProducts = async (req, res) => {
       where: {
         adminId,
         ...(search && {
-          name: { contains: search, mode: "insensitive" },
+          // name: { contains: search, mode: "insensitive" },
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { variants: { some: { sku: { contains: search, mode: "insensitive" } } } },
+          ],
         }),
       },
       include: {

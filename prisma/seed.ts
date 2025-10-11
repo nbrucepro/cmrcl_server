@@ -6,7 +6,7 @@ async function main() {
   // Replace this with the adminId you want to associate the categories with
   const adminId = "8859d616-3dae-49ab-892e-cd8e6ea0a084";
 
-  const categories = ["door", "lock"];
+  const categories = ["door", "lock", "mattress"];
 
   for (const name of categories) {
     // Check if category already exists to avoid duplicates
