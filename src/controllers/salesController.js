@@ -63,7 +63,11 @@ export const getSales = async (req, res) => {
       include: {
         product: {
           include: {
-            variants: true,
+            variants: {
+              include: {
+                attributes:true
+              }
+            },
           },
         },
       },
@@ -76,6 +80,8 @@ export const getSales = async (req, res) => {
         saleId: s.saleId,
         productId: s.productId,
         productName: s.product?.name || "—",
+        categoryId:p.product.categoryId,
+        pAttributes:variant?.attributes,
         sellingPrice: variant?.sellingPrice || s.unitPrice,
         quantity: s.quantity,
         totalAmount: s.totalAmount,

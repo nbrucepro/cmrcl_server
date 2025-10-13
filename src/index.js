@@ -12,6 +12,7 @@ import expenseRoutes from "./routes/expenseRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
 const allowedOrigins = [
+  "http://localhost:3001",
   "http://localhost:3000",
   "https://cmrcl.vercel.app",
 ];

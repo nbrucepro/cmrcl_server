@@ -63,7 +63,11 @@ export const getPurchases = async (req, res) => {
       include: {
         product: {
           include: {
-            variants: true,
+            variants: {
+              include: {
+                attributes:true
+              }
+            },
           },
       },
       },
@@ -76,6 +80,8 @@ export const getPurchases = async (req, res) => {
         purchaseId: p.purchaseId,
         productId: p.productId,
         productName: p.product?.name || "—",
+        categoryId:p.product.categoryId,
+        pAttributes:variant?.attributes,
         purchasePrice: variant?.purchasePrice || 0,
         quantity: p.quantity,
         totalCost: p.totalCost,
@@ -83,7 +89,6 @@ export const getPurchases = async (req, res) => {
         date: p.timestamp,
       };
     });
-
     res.status(200).json(formatted);
   } catch (error) {
     console.error(error);

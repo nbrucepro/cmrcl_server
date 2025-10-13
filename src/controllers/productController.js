@@ -98,7 +98,7 @@ export const updateProduct = async (req, res) => {
   try {
     const adminId = req.admin.adminId;
     const { id } = req.params; // productId
-    const { name, description, rating, variants } = req.body;
+    const { name,categoryId, description, rating, variants } = req.body;
 
     // fetch product + existing variants for permission check and optional sync logic
     const product = await prisma.products.findUnique({
@@ -115,7 +115,7 @@ export const updateProduct = async (req, res) => {
       // 1) update product basic fields
       await tx.products.update({
         where: { productId: id },
-        data: { name, description, rating },
+        data: { name,categoryId, description, rating },
       });
 
       // 2) For each variant in payload: update existing or create new
