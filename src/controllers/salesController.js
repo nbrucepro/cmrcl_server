@@ -80,7 +80,7 @@ export const getSales = async (req, res) => {
         saleId: s.saleId,
         productId: s.productId,
         productName: s.product?.name || "—",
-        categoryId:p.product.categoryId,
+        categoryId:s.product.categoryId,
         pAttributes:variant?.attributes,
         sellingPrice: variant?.sellingPrice || s.unitPrice,
         quantity: s.quantity,
