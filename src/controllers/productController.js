@@ -15,6 +15,7 @@ export const getProducts = async (req, res) => {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
             { variants: { some: { sku: { contains: search, mode: "insensitive" } } } },
+            { variants: { some: { attributes: { some: { name:{equals: "Lock code", mode: "insensitive"}, value: {contains: search, mode: "insensitive"} } } } } },
           ],
         }),
       },
