@@ -35,7 +35,7 @@ export const createPurchase = async (req, res) => {
           where: { variantId: product.variants[0].variantId },
           data: {
             stockQuantity: { increment: quantity },
-            purchasePrice: unitCost,
+            // purchasePrice: unitCost,
           },
       });
 

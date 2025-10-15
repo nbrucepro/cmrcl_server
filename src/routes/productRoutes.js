@@ -4,6 +4,8 @@ import { createPurchase, getPurchases } from "../controllers/purchasesController
 import { createSale, getSales } from "../controllers/salesController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { getProfitsLosses } from "../controllers/profit-loss.js";
+import * as rec from "../controllers/receivables.js";
+import * as pay from "../controllers/payables.js";
 
 const router = Router();
 
@@ -19,6 +21,20 @@ router.post("/purchases",authMiddleware, createPurchase);
 router.get("/sales",authMiddleware, getSales);
 router.post("/sales",authMiddleware, createSale);
 
+//finance
+
+router.post("/receivables",authMiddleware, rec.createReceivable);
+router.get("/receivables",authMiddleware, rec.getReceivables);
+router.put("/receivables/:receivableId",authMiddleware, rec.updateReceivable); // generic update
+router.post("/receivables/:receivableId/pay",authMiddleware, rec.recordReceivablePayment);
+router.delete("/receivables/:receivableId",authMiddleware, rec.deleteReceivable);
+
+// Payables
+router.post("/payables",authMiddleware, pay.createPayable);
+router.get("/payables",authMiddleware, pay.getPayables);
+router.put("/payables/:payableId",authMiddleware, pay.updatePayable);
+router.post("/payables/:payableId/pay",authMiddleware, pay.recordPayablePayment);
+router.delete("/payables/:payableId",authMiddleware, pay.deletePayable);
 
 // Profit & Loss
 router.get("/profits-losses", authMiddleware, getProfitsLosses);

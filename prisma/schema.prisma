@@ -17,15 +17,17 @@ model Admin {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  categories      Category[]
-  products        Products[]
-  sales           Sales[]
-  purchases       Purchases[]
-  expenses        Expenses[]
-  salesSummary    SalesSummary[]
-  purchaseSummary PurchaseSummary[]
-  expenseSummary  ExpenseSummary[]
+  categories        Category[]
+  products          Products[]
+  sales             Sales[]
+  purchases         Purchases[]
+  expenses          Expenses[]
+  salesSummary      SalesSummary[]
+  purchaseSummary   PurchaseSummary[]
+  expenseSummary    ExpenseSummary[]
   profitLossSummary ProfitLossSummary[]
+  receivables       Receivable[]
+  payables          Payable[]
 }
 
 model Category {
@@ -37,32 +39,32 @@ model Category {
 }
 
 model Products {
-  productId  String           @id @default(uuid())
-  name       String
-  rating     Float?
-  categoryId String?
+  productId   String           @id @default(uuid())
+  name        String
+  rating      Float?
+  categoryId  String?
   description String?
-  adminId    String
-  admin      Admin            @relation(fields: [adminId], references: [adminId])
-  category   Category?        @relation(fields: [categoryId], references: [categoryId])
-  variants   ProductVariant[]
-  Sales      Sales[]
-  Purchases  Purchases[]
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  adminId     String
+  admin       Admin            @relation(fields: [adminId], references: [adminId])
+  category    Category?        @relation(fields: [categoryId], references: [categoryId])
+  variants    ProductVariant[]
+  Sales       Sales[]
+  Purchases   Purchases[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model ProductVariant {
-  variantId      String                    @id @default(uuid())
-  sku            String?                   @unique
-  purchasePrice  Float                     @default(0) // 🆕 cost of buying
-  sellingPrice   Float                     @default(0) // 🆕 price for customers
-  stockQuantity  Int                       @default(0)
-  productId      String
-  product        Products                  @relation(fields: [productId], references: [productId])
-  attributes     ProductVariantAttribute[]
-  createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
+  variantId     String                    @id @default(uuid())
+  sku           String?                   @unique
+  purchasePrice Float                     @default(0) // 🆕 cost of buying
+  sellingPrice  Float                     @default(0) // 🆕 price for customers
+  stockQuantity Int                       @default(0)
+  productId     String
+  product       Products                  @relation(fields: [productId], references: [productId])
+  attributes    ProductVariantAttribute[]
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
 }
 
 model ProductVariantAttribute {
@@ -74,27 +76,29 @@ model ProductVariantAttribute {
 }
 
 model Sales {
-  saleId      String   @id @default(uuid())
+  saleId      String       @id @default(uuid())
   productId   String
   adminId     String
-  admin       Admin    @relation(fields: [adminId], references: [adminId])
+  admin       Admin        @relation(fields: [adminId], references: [adminId])
   timestamp   DateTime
   quantity    Int
   unitPrice   Float
   totalAmount Float
-  product     Products @relation(fields: [productId], references: [productId])
+  product     Products     @relation(fields: [productId], references: [productId])
+  receivables Receivable[]
 }
 
 model Purchases {
-  purchaseId String   @id @default(uuid())
+  purchaseId String    @id @default(uuid())
   productId  String
   adminId    String
-  admin      Admin    @relation(fields: [adminId], references: [adminId])
+  admin      Admin     @relation(fields: [adminId], references: [adminId])
   timestamp  DateTime
   quantity   Int
   unitCost   Float
   totalCost  Float
-  product    Products @relation(fields: [productId], references: [productId])
+  product    Products  @relation(fields: [productId], references: [productId])
+  payables   Payable[]
 }
 
 model Expenses {
@@ -143,16 +147,79 @@ model ExpenseByCategory {
 }
 
 model ProfitLossSummary {
-  id              String   @id @default(uuid())
-  adminId         String
-  admin           Admin    @relation(fields: [adminId], references: [adminId])
-  totalSales      Float    @default(0)
-  totalPurchases  Float    @default(0)
-  totalExpenses   Float    @default(0)
-  netProfit       Float    @default(0)
+  id               String   @id @default(uuid())
+  adminId          String
+  admin            Admin    @relation(fields: [adminId], references: [adminId])
+  totalSales       Float    @default(0)
+  totalPurchases   Float    @default(0)
+  totalExpenses    Float    @default(0)
+  netProfit        Float    @default(0)
   changePercentage Float?
-  periodStart     DateTime
-  periodEnd       DateTime
-  createdAt       DateTime @default(now())
+  periodStart      DateTime
+  periodEnd        DateTime
+  createdAt        DateTime @default(now())
 }
 
+model Receivable {
+  receivableId String    @id @default(uuid())
+  saleId       String
+  adminId      String
+  customerName String?
+  contactInfo  String?
+  amountDue    Float
+  amountPaid   Float     @default(0)
+  dueDate      DateTime?
+  status       String    @default("unpaid") // unpaid, partial, paid
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sale     Sales               @relation(fields: [saleId], references: [saleId])
+  admin    Admin               @relation(fields: [adminId], references: [adminId])
+  payments ReceivablePayment[]
+}
+
+model Payable {
+  payableId    String    @id @default(uuid())
+  purchaseId   String
+  adminId      String
+  supplierName String?
+  contactInfo  String?
+  amountDue    Float
+  amountPaid   Float     @default(0)
+  dueDate      DateTime?
+  status       String    @default("unpaid") // unpaid, partial, paid
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  purchase Purchases        @relation(fields: [purchaseId], references: [purchaseId])
+  admin    Admin            @relation(fields: [adminId], references: [adminId])
+  payments PayablePayment[]
+}
+
+model ReceivablePayment {
+  paymentId    String   @id @default(uuid())
+  receivableId String
+  amount       Float
+  paymentDate  DateTime @default(now())
+  method       String?
+  reference    String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  receivable Receivable @relation(fields: [receivableId], references: [receivableId], onDelete: Cascade)
+}
+
+model PayablePayment {
+  paymentId   String   @id @default(uuid())
+  payableId   String
+  amount      Float
+  paymentDate DateTime @default(now())
+  method      String?
+  reference   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  payable Payable @relation(fields: [payableId], references: [payableId], onDelete: Cascade)
+}
