@@ -23,6 +23,16 @@ export const createReceivable = async (req, res) => {
         notes,
       },
     });
+    if (amountPaid > 0) {
+      await prisma.receivablePayment.create({
+        data: {
+          receivableId: r.receivableId,
+          amount: amountPaid,
+          method: "Initial",
+          notes: "Initial payment at sale creation",
+        },
+      });
+    }    
     res.status(201).json(r);
   } catch (err) {
     console.error(err);
@@ -91,7 +101,7 @@ export const recordReceivablePayment = async (req, res) => {
   
       const updated = await prisma.receivable.update({
         where: { receivableId },
-        data: { amountPaid: totalPaid, amountDue: remaining, status },
+        data: { amountPaid: totalPaid, status },
       });
   
       res.status(200).json(updated);
