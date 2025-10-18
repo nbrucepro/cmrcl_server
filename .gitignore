@@ -3,4 +3,5 @@ node_modules
 .env
 
 /generated/prisma
-db
+db/
+*.db
