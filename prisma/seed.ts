@@ -22,9 +22,9 @@ async function main() {
       await prisma.category.create({
         data: { name, adminId },
       });
-      console.log(`✅ Category "${name}" created.`);
+      console.log(`Category "${name}" created.`);
     } else {
-      console.log(`⚠️ Category "${name}" already exists.`);
+      console.log(` Category "${name}" already exists.`);
     }
   }
 }

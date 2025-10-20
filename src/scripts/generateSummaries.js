@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 async function generateSummaries() {
   try {
-    console.log("🧾 Generating sales and purchase summaries...");
+    console.log(" Generating sales and purchase summaries...");
 
     // --- SALES SUMMARY ---
     const sales = await prisma.sales.findMany({
@@ -35,7 +35,7 @@ async function generateSummaries() {
       });
     }
 
-    console.log("✅ SalesSummary generated.");
+    console.log(" SalesSummary generated.");
 
     // --- PURCHASE SUMMARY ---
     const purchases = await prisma.purchases.findMany({
@@ -67,9 +67,9 @@ async function generateSummaries() {
       });
     }
 
-    console.log("✅ PurchaseSummary generated.");
+    console.log(" PurchaseSummary generated.");
   } catch (err) {
-    console.error("❌ Error generating summaries:", err);
+    console.error(" Error generating summaries:", err);
   } finally {
     await prisma.$disconnect();
   }

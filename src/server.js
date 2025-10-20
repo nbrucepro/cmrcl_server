@@ -8,10 +8,10 @@ async function startServer() {
     console.log("Database connected");
 
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(` Server running on port ${PORT}`);
     });    
   } catch (err) {
-    console.error("❌ Database connection failed:", err);
+    console.error(" Database connection failed:", err);
     process.exit(1);
   }
 }

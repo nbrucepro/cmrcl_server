@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 export const updateSummary = async (type, action, adminId, amountDiff, timestamp) => {
     if (!timestamp || isNaN(new Date(timestamp))) {
-      console.error("❌ Invalid timestamp provided:", timestamp);
+      console.error(" Invalid timestamp provided:", timestamp);
       return;
     }
   
