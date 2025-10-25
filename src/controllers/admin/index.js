@@ -12,7 +12,7 @@ export const registerAdmin = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const admin = await prisma.admin.create({
-      data: { email, password: hashedPassword, name },
+      data: { email, password: hashedPassword, name,isSuperAdmin:true },
     });
 
     res.json({ adminId: admin.adminId, email: admin.email });

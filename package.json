@@ -12,7 +12,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "ts-node prisma/seed.ts",
+    "db:seed": "ts-node prisma/seedDesigns.js",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev --name init",
     "migrate:dev": "cross-env DATABASE_URL=$DATABASE_URL_LOCAL npx prisma migrate dev --name init",

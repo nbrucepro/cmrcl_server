@@ -36,6 +36,8 @@ model Category {
   adminId    String
   admin      Admin      @relation(fields: [adminId], references: [adminId])
   products   Products[]
+  designs    Design[]
+  categoryAttributes CategoryAttribute[]
 }
 
 model Products {
@@ -222,4 +224,23 @@ model PayablePayment {
   createdAt   DateTime @default(now())
 
   payable Payable @relation(fields: [payableId], references: [payableId], onDelete: Cascade)
+}
+
+model Design {
+  designId    String   @id @default(uuid())
+  name        String
+  sizes       String[] // e.g. ["45", "42", "40"]
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [categoryId])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CategoryAttribute {
+  attributeId String   @id @default(uuid())
+  name        String
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [categoryId])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
