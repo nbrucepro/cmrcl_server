@@ -52,33 +52,59 @@ export const getDashboardMetrics = async (req, res) => {
     });
 
     const totalExpenses = expenseData.reduce((sum, e) => sum + e.amount, 0);
+    const allPurchases = await prisma.purchases.findMany({
+      where: {
+        adminId,
+        timestamp: { gte: startDate, lte: endDate },
+      },
+      orderBy: { timestamp: "asc" },
+    });
 
     const productsWithProfit = await Promise.all(
       products.map(async (product) => {
         const productSales = salesData.filter(
           (s) => s.productId === product.productId
         );
-        const productPurchases = purchaseData.filter(
-          (p) => p.productId === product.productId
-        );
 
-        const soldCount = productSales.reduce((sum, s) => sum + s.quantity, 0);
-        const soldRevenue = productSales.reduce(
-          (sum, s) => sum + s.totalAmount,
-          0
-        );
-        const purchasedCost = productPurchases.reduce(
-          (sum, p) => sum + p.totalCost,
-          0
-        );
+        let soldRevenue = 0;
+        let soldCost = 0;
 
-        const profit = soldRevenue - purchasedCost;
+        for (const sale of productSales) {
+          let remaining = sale.quantity;
+          let cost = 0;
+
+          const productPurchases = allPurchases
+            .filter(
+              (p) =>
+                p.productId === product.productId &&
+                p.timestamp <= sale.timestamp
+            )
+            .map((p) => ({ ...p }));
+
+          for (const purchase of productPurchases) {
+            if (remaining <= 0) break;
+
+            const available = purchase.quantity;
+            const used = Math.min(available, remaining);
+
+            cost += used * purchase.unitCost;
+            remaining -= used;
+            purchase.quantity -= used;
+          }
+
+          const fallbackUnitCost = product.variants?.[0]?.purchasePrice || 0;
+          if (remaining > 0) cost += remaining * fallbackUnitCost;
+
+          soldCost += cost;
+          soldRevenue += sale.totalAmount;
+        }
+
+        const profit = soldRevenue - soldCost;
 
         return {
           ...product,
-          soldCount,
+          soldCount: productSales.reduce((sum, s) => sum + s.quantity, 0),
           soldRevenue,
-          purchasedCost,
           profit,
         };
       })
@@ -87,8 +113,12 @@ export const getDashboardMetrics = async (req, res) => {
     const popularProducts = productsWithProfit
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
+    const totalProductProfit = productsWithProfit.reduce(
+      (sum, p) => sum + p.profit,
+      0
+    );
 
-    const netProfit = totalSales - totalPurchases - totalExpenses;
+    const netProfit = totalProductProfit;
 
     const salesGroupedByDay = salesData.reduce((acc, sale) => {
       const day = new Date(sale.timestamp).toISOString().split("T")[0];

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createProduct, deleteProduct, getProducts, updateProduct } from "../controllers/productController.js";
 import { createPurchase, getPurchases } from "../controllers/purchasesController.js";
-import { createSale, getSales } from "../controllers/salesController.js";
+import { createSale, getSales, getSalesWithProfit } from "../controllers/salesController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { getProfitsLosses } from "../controllers/profit-loss.js";
 import * as rec from "../controllers/receivables.js";
@@ -18,7 +18,7 @@ router.get("/purchases",authMiddleware, getPurchases);
 router.post("/purchases",authMiddleware, createPurchase);
 
 // Sales
-router.get("/sales",authMiddleware, getSales);
+router.get("/sales",authMiddleware, getSalesWithProfit);
 router.post("/sales",authMiddleware, createSale);
 
 //finance
