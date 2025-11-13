@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createProduct, deleteProduct, getProducts, updateProduct } from "../controllers/productController.js";
-import { createPurchase, getPurchases } from "../controllers/purchasesController.js";
-import { createSale, getSales, getSalesWithProfit } from "../controllers/salesController.js";
+import { createPurchase, deletePurchase, getPurchases, updatePurchase } from "../controllers/purchasesController.js";
+import { createSale, deleteSale, getSales, getSalesWithProfit, updateSale } from "../controllers/salesController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { getProfitsLosses } from "../controllers/profit-loss.js";
 import * as rec from "../controllers/receivables.js";
@@ -16,10 +16,14 @@ router.delete("/:id", authMiddleware, deleteProduct);
 // Purchases
 router.get("/purchases",authMiddleware, getPurchases);
 router.post("/purchases",authMiddleware, createPurchase);
+router.put("/purchases/:purchaseId",authMiddleware,updatePurchase)
+router.delete("/purchases/:purchaseId",authMiddleware,deletePurchase)
 
 // Sales
 router.get("/sales",authMiddleware, getSalesWithProfit);
 router.post("/sales",authMiddleware, createSale);
+router.put("/sales/:saleId",authMiddleware,updateSale)
+router.delete("/sales/:saleId",authMiddleware,deleteSale)
 
 //finance
 

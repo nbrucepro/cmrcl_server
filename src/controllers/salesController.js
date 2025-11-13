@@ -78,7 +78,6 @@ export const getSales = async (req, res) => {
       },
       orderBy: { timestamp: "desc" },
     });
-
     const formatted = sales.map((s) => {
       const variant = s.product?.variants?.[0];
       return {
@@ -110,11 +109,11 @@ export const getSalesWithProfit = async (req, res) => {
       include: {
         product: { include: { variants: { include: { attributes: true } } } },
       },
-      orderBy: { timestamp: "asc" },
+      orderBy: { timestamp: "desc" },
     });
 
     const purchases = await prisma.purchases.findMany({
-      orderBy: { timestamp: "asc" },
+      orderBy: { timestamp: "desc" },
     });
 
     const salesWithProfit = sales.map((sale) => {
