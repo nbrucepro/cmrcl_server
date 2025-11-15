@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminId = "8859d616-3dae-49ab-892e-cd8e6ea0a084";
+  const adminId = "02caf09a-07ac-43e0-a045-05bcfc8f7a3b";
 
   const categories = [
     "Malaysian",
@@ -22,9 +22,9 @@ async function main() {
       await prisma.category.create({
         data: { name, adminId },
       });
-      console.log(`Category "${name}" created.`);
+      console.log(`✅ Category "${name}" created.`);
     } else {
-      console.log(` Category "${name}" already exists.`);
+      console.log(`⚠️ Category "${name}" already exists.`);
     }
   }
 }
