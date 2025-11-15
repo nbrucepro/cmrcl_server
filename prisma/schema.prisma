@@ -85,6 +85,8 @@ model Sales {
   timestamp   DateTime
   quantity    Int
   unitPrice   Float
+  guarantyValue Int?      
+  guarantyUnit  String?
   totalAmount Float
   product     Products     @relation(fields: [productId], references: [productId])
   receivables Receivable[]
